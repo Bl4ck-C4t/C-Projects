@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+extern char filename[30] = "students.dat";
+
 
 
 
@@ -20,13 +23,15 @@ void sorter(Student students[], int ln);
 void add_student();
 void edit_students();
 void change_file();
+void delete_student();
+void backup();
 Student create_student();
 
 int main()
 {
     int choice;
     do{
-        printf("\n1. Make students\n2. Add student\n3. Show students\n4. Edit\n5. Change file\n6. Exit");
+        printf("\n1. Make students\n2. Add student\n3. Show students\n4. Edit\n5. Delete student\n6. Change file\n7. Exit");
         printf("\nEnter number: ");
         scanf("%d", &choice);
         getchar();
@@ -35,11 +40,12 @@ int main()
             case 2: add_student(); break;
             case 3: Read_students(); break;
             case 4: edit_students(); break;
-            case 5: change_file(); break;
-            case 6: printf("\nOk bye."); break;
+            case 5: delete_student(); break;
+            case 6: change_file(); break;
+            case 7: printf("\nOk bye."); break;
         }
 
-    }while(choice != 6);
+    }while(choice != 7);
     return 0;
 }
 
@@ -61,7 +67,7 @@ void Make_students(){
     Student st;
     FILE *f;
     FILE *con;
-    f = fopen("students.dat", "wb");
+    f = fopen("filename", "wb");
     int i,k,j = 0;
     int ln;
     i = 0;
@@ -122,7 +128,7 @@ void Read_students(){
     int nm = 0;
     FILE *f;
     int j;
-    f = fopen("students.dat", "rb");
+    f = fopen("filename", "rb");
     float class_average = 0;
     int grade;
     printf("\nName   Number   Grades       Average");
@@ -137,7 +143,7 @@ void Read_students(){
             printf("%d, ", st.grades[j]);
             j++;
         }
-        printf("     %.2f\n", st.avg);
+        printf("     %.2f", st.avg);
         if(st.avg < 3){
             poprawka[k] = st;
             k++;
@@ -145,7 +151,7 @@ void Read_students(){
 
     }
     class_average /= nm;
-    printf("Class average: %.2f", class_average);
+    printf("\nClass average: %.2f", class_average);
     printf("\nNa poprawitelen: ");
     for(j = 0; j < k; j++){
         printf("\n%s", poprawka[j].name);
@@ -159,7 +165,7 @@ void add_student(){ // Still in development
     FILE *f;
     int i = 0;
     int j = 0;
-    f = fopen("students.dat", "ab");
+    f = fopen(filename, "ab");
     printf("\nEnter name of student: ");
     gets(st.name);
     printf("\nEnter number of %s: ", st.name);
@@ -186,7 +192,7 @@ void edit_students(){
     int grade;
     Student st;
     Student st_new;
-    f = fopen("student.dat", "rb+");
+    f = fopen(filename, "rb+");
     printf("\nEnter number of student: ");
     scanf("%d", &st_new.num);
     getchar();
@@ -216,7 +222,59 @@ void edit_students(){
 }
 
 void change_file(){
+    printf("\nEnter filename: ");
+    gets(filename);
+    printf("\nFile updated.");
+}
 
+void delete_student(){
+    int nm;
+    int len = 0;
+    int index;
+    backup(); // backup for security
+    printf("\nEnter student number to delete: ");
+    scanf("%d", &nm);
+    getchar();
+    FILE *f;
+    Student st;
+    f = fopen(filename, "rb+");
+    while(fread(&st, sizeof(st), 1, f)){
+        len++;
+    }
+    len *= sizeof(st);
+    len -= sizeof(st);
+    fseek(f, SEEK_SET, 0);
+    while(fread(&st, sizeof(st), 1, f)){
+        if(st.num == nm){
+            while(fread(&st, sizeof(st), 1, f)){
+                index = ftell(f) - sizeof(st)*2;
+                fseek(f, SEEK_SET, index);
+                fwrite(&st, sizeof(st), 1, f);
+                index = ftell(f) + sizeof(st);
+                fseek(f, SEEK_SET, index);
+            }
+            break;
+        }
+    }
+    chsize(fileno(f), len);
+    fclose(f);
+    printf("\nStudent deleted.");
+}
+void backup(){
+    char fname[50];
+    printf("\nEnter filename of backup: ");
+    gets(fname);
+    FILE *f;
+    FILE *b;
+    f = fopen(filename, "rb");
+    b = fopen(fname, "wb");
+    Student st;
+    while(fread(&st, sizeof(st), 1, f)){
+        fwrite(&st, sizeof(st), 1, b);
+    }
+    fclose(f);
+    fclose(b);
+    printf("\nStudents backed up to %s", fname);
 }
 
 Student create_student(){
