@@ -29,12 +29,32 @@ Student create_student();
 
 int main()
 {
-    int choice;
-    do{
-        printf("\n1. Make students\n2. Add student\n3. Show students\n4. Edit\n5. Delete student\n6. Change file\n7. Exit");
-        printf("\nEnter number: ");
-        scanf("%d", &choice);
-        getchar();
+    int choice = 0;
+    char option;
+    int ln = 7;
+    int i;
+    char options[50][50] = {"1. Make students", "2. Add student", "3. Show students", "4. Edit", "5. Delete student", "6. Change file", "7. Exit"};
+    while(1){
+        while(1){
+            for(i = 0; i < ln; i++){
+                printf("\n");
+                if (choice == i){
+                    printf("> ");
+                }
+                printf("%s", options[i]);
+            }
+            option = getche();
+            if(option == 38 && choice > 0){// up arrow
+                choice--;
+            }
+            if(option == 40 && choice < ln){ // down arrow
+                choice++;
+            }
+            if(option == 13){
+                break;
+            }
+            system("cls");
+        }
         switch(choice){
             case 1: Make_students(); break;
             case 2: add_student(); break;
@@ -44,8 +64,7 @@ int main()
             case 6: change_file(); break;
             case 7: printf("\nOk bye."); break;
         }
-
-    }while(choice != 7);
+    }
     return 0;
 }
 
@@ -67,7 +86,7 @@ void Make_students(){
     Student st;
     FILE *f;
     FILE *con;
-    f = fopen("filename", "wb");
+    f = fopen(filename, "wb");
     int i,k,j = 0;
     int ln;
     i = 0;
@@ -128,7 +147,7 @@ void Read_students(){
     int nm = 0;
     FILE *f;
     int j;
-    f = fopen("filename", "rb");
+    f = fopen(filename, "rb");
     float class_average = 0;
     int grade;
     printf("\nName   Number   Grades       Average");
@@ -208,11 +227,11 @@ void edit_students(){
         if(grade == 0) break;
         j++;
     }
-    st_new.avg = average(st);
+    st_new.avg = average(st_new);
     while(fread(&st, sizeof(st),1, f)){
         if(st.num == st_new.num){
             index = ftell(f) - sizeof(st);
-            fseek(f, SEEK_SET, index);
+            fseek(f, index, SEEK_SET);
             fwrite(&st_new, sizeof(Student), 1, f);
             break;
         }
@@ -248,10 +267,10 @@ void delete_student(){
         if(st.num == nm){
             while(fread(&st, sizeof(st), 1, f)){
                 index = ftell(f) - sizeof(st)*2;
-                fseek(f, SEEK_SET, index);
+                fseek(f, index, SEEK_SET);
                 fwrite(&st, sizeof(st), 1, f);
                 index = ftell(f) + sizeof(st);
-                fseek(f, SEEK_SET, index);
+                fseek(f, index, SEEK_SET);
             }
             break;
         }
